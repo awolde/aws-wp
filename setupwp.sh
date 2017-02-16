@@ -26,4 +26,4 @@ sed -i 's/username_here/$DBUSER/g' wp-config.php
 sed -i 's/password_here/$DBPASS/g' wp-config.php 
 sed -i 's/database_name_here/$DBNAME/g' wp-config.php 
 EOF
-#aws ec2 run-instances --image-id ami-b5b671a3 --count 1 --instance-type t2.micro  --key-name awolde --security-groups "allow ssh and http" --user-data file://wp-setup.sh
+aws ec2 run-instances --image-id ami-b5b671a3 --count 1 --instance-type t2.micro  --key-name awolde --security-groups "allow ssh and http" --user-data file://wp-setup.sh
