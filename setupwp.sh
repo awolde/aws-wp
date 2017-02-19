@@ -8,6 +8,7 @@ aws rds create-db-instance --db-instance-identifier $DBINSTANCE --db-instance-cl
 echo "Launching db...please wait....\n"
 
 sleep 8m
+DBHOST=$(aws rds describe-db-instances | jq .DBInstances[].Endpoint.Address | tr -d '""' | grep $DBINSTANCE)
 
 cat <<EOF > wp-setup.sh
 #!/bin/bash
