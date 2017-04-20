@@ -12,8 +12,8 @@ do
   if [ $? -eq 0 ]; then
 	break;
   else
-	echo "retrying after 3 sec..."
-	sleep 3
+	echo "retrying after 5 sec... I made a change and I'm not sure what else I need..."
+	sleep 5
   fi
 done
 
