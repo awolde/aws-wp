@@ -6,16 +6,11 @@ DBPASS=''
 
 aws rds create-db-instance --db-instance-identifier $DBINSTANCE --db-instance-class db.t2.micro --db-name $DBNAME --engine mysql --master-username $DBUSER --master-user-password $DBPASS --allocated-storage 5  --vpc-security-group-ids sg-922e43ee --no-publicly-accessible
 echo "Launching db...please wait....\n"
-while true
-do
-  DBHOST=$(aws rds describe-db-instances | jq .DBInstances[].Endpoint.Address | tr -d '""' | grep $DBINSTANCE)
-  if [ $? -eq 0 ]; then
-	break;
-  else
-	echo "retrying after 3 sec..."
-	sleep 3
-  fi
-done
+
+sleep 10m
+
+DBHOST=$(aws rds describe-db-instances | jq .DBInstances[].Endpoint.Address | tr -d '""' | grep $DBINSTANCE)
+  
 
 cat <<EOF > wp-setup.sh
 #!/bin/bash
