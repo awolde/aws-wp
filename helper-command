@@ -5,8 +5,7 @@ docker-compose -f users.yml push
 docker stack deploy users --compose-file users.yml
 curl http://127.0.0.1:5000/v2/_catalog
 
-
-Jenkins
+#Run Jenkins, save admin password
 docker build -t jenkins .
 docker run -p 8080:8080 --name my-ci jenkins
 
@@ -14,52 +13,48 @@ docker run -p 8080:8080 --name my-ci jenkins
 sudo adduser jenkins
 sudo adduser jenkins docker
 sudo su - jenkins
+ssh-keygen
 cat .ssh/id_rsa.pub > .ssh/authorized_keys
 docker cp .ssh my-ci:/var/lib/jenkins/
 docker exec -ti my-ci chown jenkins: /var/lib/jenkins/ -R
 
-#jobs
-DOCKER_MASTER="10.10.0.141"
+#Jenkins jobs
+#Lint checking
+DOCKER_MASTER="172.17.0.1"
 BUILD_DIR="/tmp/${BUILD_NUMBER}"
+ls -l
+php -l php-rest/restdb.php
+pylint flaskui/*.py
+
+#build staging
+DOCKER_MASTER="172.17.0.1"
+BUILD_DIR="/tmp/${BUILD_NUMBER}"
+ssh -o StrictHostKeyChecking=no $DOCKER_MASTER "rm -rf ${BUILD_DIR}"
 ssh -o StrictHostKeyChecking=no $DOCKER_MASTER "mkdir -p ${BUILD_DIR}"
 scp -r -o StrictHostKeyChecking=no . $DOCKER_MASTER:${BUILD_DIR}
-
 ssh -o StrictHostKeyChecking=no $DOCKER_MASTER "cd ${BUILD_DIR} && docker-compose -f users-staging.yml build"
 ssh -o StrictHostKeyChecking=no $DOCKER_MASTER "cd ${BUILD_DIR} && docker-compose -f users-staging.yml push"
-#deploy
-DOCKER_MASTER="10.10.0.141"
+
+#deploy stagin
+DOCKER_MASTER="172.17.0.1"
 BUILD_DIR="/tmp/${BUILD_NUMBER}"
+ssh -o StrictHostKeyChecking=no $DOCKER_MASTER "rm -rf ${BUILD_DIR}"
+scp -r -o StrictHostKeyChecking=no . $DOCKER_MASTER:${BUILD_DIR}
 ssh -o StrictHostKeyChecking=no $DOCKER_MASTER "cd ${BUILD_DIR} && docker stack deploy users-staging --compose-file users-staging.yml"
 
-#test
+#integration test
+sleep 4
+URL=http://35.184.186.65:8000
+curl -s ${URL} -I
+curl -s ${URL}/form -X POST -d "name=test_${BUILD_NUMBER}&username=testuser_${BUILD_NUMBER}"
+curl -s ${URL}/list -X POST -d 'listall' | jq . 
 
-URL="http://ec2-52-86-21-247.compute-1.amazonaws.com/"
-
-DOCKER_MASTER="ec2-52-86-21-247.compute-1.amazonaws.com"
+#prod build and deploy
+DOCKER_MASTER="172.17.0.1"
 BUILD_DIR="/tmp/${BUILD_NUMBER}"
+ssh -o StrictHostKeyChecking=no $DOCKER_MASTER "rm -rf ${BUILD_DIR}"
 ssh -o StrictHostKeyChecking=no $DOCKER_MASTER "mkdir -p ${BUILD_DIR}"
-
 scp -r -o StrictHostKeyChecking=no . $DOCKER_MASTER:${BUILD_DIR}
 
 ssh -o StrictHostKeyChecking=no $DOCKER_MASTER "cd ${BUILD_DIR} && docker-compose -f users.yml build"
 ssh -o StrictHostKeyChecking=no $DOCKER_MASTER "cd ${BUILD_DIR} && docker-compose -f users.yml push"
-ssh -o StrictHostKeyChecking=no $DOCKER_MASTER "cd ${BUILD_DIR} && docker stack deploy users --compose-file users.yml"
-
-sleep 5
-curl -s ${URL} -I
-
-#to prod
-URL="http://ec2-52-86-21-247.compute-1.amazonaws.com/"
-
-DOCKER_MASTER="ec2-52-86-21-247.compute-1.amazonaws.com"
-BUILD_DIR="/tmp/${BUILD_NUMBER}"
-ssh -o StrictHostKeyChecking=no $DOCKER_MASTER "mkdir -p ${BUILD_DIR}"
-
-scp -r -o StrictHostKeyChecking=no . $DOCKER_MASTER:${BUILD_DIR}
-
-ssh -o StrictHostKeyChecking=no $DOCKER_MASTER "cd ${BUILD_DIR} && docker-compose -f users.yml build"
-ssh -o StrictHostKeyChecking=no $DOCKER_MASTER "cd ${BUILD_DIR} && docker-compose -f users.yml push"
-ssh -o StrictHostKeyChecking=no $DOCKER_MASTER "cd ${BUILD_DIR} && docker stack deploy users --compose-file users.yml"
-
-sleep 5
-curl -s ${URL} -I
