@@ -6,7 +6,7 @@ services:
       context: ./php-rest
       args:
         buildno: ${BUILD_NUMBER}
-    image: ${REGISTRY_SLASH-127.0.0.1:5000}/php-rest:${BUILD_NUMBER-latest}
+    image: ${REGISTRY_SLASH-127.0.0.1:5000}/php-rest-staging:${BUILD_NUMBER-latest}
     depends_on:
       - db-staging
     environment:
@@ -16,11 +16,11 @@ services:
     deploy:
       replicas: 2
     ports:
-    - "1020:80"
+    - "2020:80"
 
   webui-staging:
     build: flaskui/
-    image: ${REGISTRY_SLASH-127.0.0.1:5000}/webui:${BUILD_NUMBER-latest}
+    image: ${REGISTRY_SLASH-127.0.0.1:5000}/webui-staging:${BUILD_NUMBER-latest}
     depends_on:
       - php-rest-staging
     deploy:

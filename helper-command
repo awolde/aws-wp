@@ -17,3 +17,49 @@ sudo su - jenkins
 cat .ssh/id_rsa.pub > .ssh/authorized_keys
 docker cp .ssh my-ci:/var/lib/jenkins/
 docker exec -ti my-ci chown jenkins: /var/lib/jenkins/ -R
+
+#jobs
+DOCKER_MASTER="10.10.0.141"
+BUILD_DIR="/tmp/${BUILD_NUMBER}"
+ssh -o StrictHostKeyChecking=no $DOCKER_MASTER "mkdir -p ${BUILD_DIR}"
+scp -r -o StrictHostKeyChecking=no . $DOCKER_MASTER:${BUILD_DIR}
+
+ssh -o StrictHostKeyChecking=no $DOCKER_MASTER "cd ${BUILD_DIR} && docker-compose -f users-staging.yml build"
+ssh -o StrictHostKeyChecking=no $DOCKER_MASTER "cd ${BUILD_DIR} && docker-compose -f users-staging.yml push"
+#deploy
+DOCKER_MASTER="10.10.0.141"
+BUILD_DIR="/tmp/${BUILD_NUMBER}"
+ssh -o StrictHostKeyChecking=no $DOCKER_MASTER "cd ${BUILD_DIR} && docker stack deploy users-staging --compose-file users-staging.yml"
+
+#test
+
+URL="http://ec2-52-86-21-247.compute-1.amazonaws.com/"
+
+DOCKER_MASTER="ec2-52-86-21-247.compute-1.amazonaws.com"
+BUILD_DIR="/tmp/${BUILD_NUMBER}"
+ssh -o StrictHostKeyChecking=no $DOCKER_MASTER "mkdir -p ${BUILD_DIR}"
+
+scp -r -o StrictHostKeyChecking=no . $DOCKER_MASTER:${BUILD_DIR}
+
+ssh -o StrictHostKeyChecking=no $DOCKER_MASTER "cd ${BUILD_DIR} && docker-compose -f users.yml build"
+ssh -o StrictHostKeyChecking=no $DOCKER_MASTER "cd ${BUILD_DIR} && docker-compose -f users.yml push"
+ssh -o StrictHostKeyChecking=no $DOCKER_MASTER "cd ${BUILD_DIR} && docker stack deploy users --compose-file users.yml"
+
+sleep 5
+curl -s ${URL} -I
+
+#to prod
+URL="http://ec2-52-86-21-247.compute-1.amazonaws.com/"
+
+DOCKER_MASTER="ec2-52-86-21-247.compute-1.amazonaws.com"
+BUILD_DIR="/tmp/${BUILD_NUMBER}"
+ssh -o StrictHostKeyChecking=no $DOCKER_MASTER "mkdir -p ${BUILD_DIR}"
+
+scp -r -o StrictHostKeyChecking=no . $DOCKER_MASTER:${BUILD_DIR}
+
+ssh -o StrictHostKeyChecking=no $DOCKER_MASTER "cd ${BUILD_DIR} && docker-compose -f users.yml build"
+ssh -o StrictHostKeyChecking=no $DOCKER_MASTER "cd ${BUILD_DIR} && docker-compose -f users.yml push"
+ssh -o StrictHostKeyChecking=no $DOCKER_MASTER "cd ${BUILD_DIR} && docker stack deploy users --compose-file users.yml"
+
+sleep 5
+curl -s ${URL} -I
