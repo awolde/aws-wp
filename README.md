@@ -12,3 +12,4 @@ docker-compose -f users.yml build
 docker-compose -f users.yml push
 docker stack deploy users --compose-file users.yml
 ```
+
