@@ -69,3 +69,6 @@ ssh -o StrictHostKeyChecking=no $DOCKER_MASTER "cd ${BUILD_DIR} && docker-compos
 ssh -o StrictHostKeyChecking=no $DOCKER_MASTER "cd ${BUILD_DIR} && docker stack deploy users-prod --compose-file users.yml"
 sleep 4
 curl -I -s http://35.184.186.65
+
+#Webhook setup on Github
+http://admin:<pass>@<INSTANCE_IP>:8080/github-webhook/
