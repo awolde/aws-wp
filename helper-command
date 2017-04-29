@@ -58,3 +58,14 @@ scp -r -o StrictHostKeyChecking=no . $DOCKER_MASTER:${BUILD_DIR}
 
 ssh -o StrictHostKeyChecking=no $DOCKER_MASTER "cd ${BUILD_DIR} && docker-compose -f users.yml build"
 ssh -o StrictHostKeyChecking=no $DOCKER_MASTER "cd ${BUILD_DIR} && docker-compose -f users.yml push"
+DOCKER_MASTER="172.17.0.1"
+BUILD_DIR="/tmp/${BUILD_NUMBER}"
+ssh -o StrictHostKeyChecking=no $DOCKER_MASTER "rm -rf ${BUILD_DIR}"
+ssh -o StrictHostKeyChecking=no $DOCKER_MASTER "mkdir -p ${BUILD_DIR}"
+scp -r -o StrictHostKeyChecking=no . $DOCKER_MASTER:${BUILD_DIR}
+
+ssh -o StrictHostKeyChecking=no $DOCKER_MASTER "cd ${BUILD_DIR} && docker-compose -f users.yml build"
+ssh -o StrictHostKeyChecking=no $DOCKER_MASTER "cd ${BUILD_DIR} && docker-compose -f users.yml push"
+ssh -o StrictHostKeyChecking=no $DOCKER_MASTER "cd ${BUILD_DIR} && docker stack deploy users-prod --compose-file users.yml"
+sleep 4
+curl -I -s http://35.184.186.65
